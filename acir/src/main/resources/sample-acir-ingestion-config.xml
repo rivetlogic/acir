@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesource.org/schema/mule/core/2.2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:core="http://www.mulesource.org/schema/mule/core/2.2"
+    xmlns:file="http://www.mulesource.org/schema/mule/file/2.2"
+    xmlns:ftp="http://www.mulesource.org/schema/mule/ftp/2.2"
+    xmlns:vm="http://www.mulesource.org/schema/mule/vm/2.2"
+    xmlns:smtp="http://www.mulesource.org/schema/mule/smtp/2.2"
+    xmlns:stdio="http://www.mulesource.org/schema/mule/stdio/2.2"
+    xmlns:email="http://www.mulesource.org/schema/mule/email/2.2"
+    xmlns:spring="http://www.springframework.org/schema/beans"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:http="http://www.mulesource.org/schema/mule/http/2.2"
+    xmlns:quartz="http://www.mulesource.org/schema/mule/quartz/2.2"
+    xmlns:scripting="http://www.mulesource.org/schema/mule/scripting/2.2"
+    xmlns:mulexml="http://www.mulesource.org/schema/mule/xml/2.2"
+    
+    
+    xsi:schemaLocation="
+       http://www.mulesource.org/schema/mule/core/2.2  http://www.mulesource.org/schema/mule/core/2.2/mule.xsd
+       http://www.mulesource.org/schema/mule/file/2.2  http://www.mulesource.org/schema/mule/file/2.2/mule-file.xsd
+       http://www.mulesource.org/schema/mule/ftp/2.2 http://www.mulesource.org/schema/mule/ftp/2.2/mule-ftp.xsd
+       http://www.mulesource.org/schema/mule/vm/2.2    http://www.mulesource.org/schema/mule/vm/2.2/mule-vm.xsd
+       http://www.mulesource.org/schema/mule/smtp/2.2  http://www.mulesource.org/schema/mule/smtp/2.2/mule-smtp.xsd
+       http://www.mulesource.org/schema/mule/stdio/2.2 http://www.mulesource.org/schema/mule/stdio/2.2/mule-stdio.xsd
+       http://www.mulesource.org/schema/mule/email/2.2 http://www.mulesource.org/schema/mule/email/2.2/mule-email.xsd
+       http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd
+       http://www.springframework.org/schema/context   http://www.springframework.org/schema/context/spring-context-2.5.xsd
+       http://www.mulesource.org/schema/mule/http/2.2  http://www.mulesource.org/schema/mule/http/2.2/mule-http.xsd
+       http://www.mulesource.org/schema/mule/quartz/2.2 http://www.mulesource.org/schema/mule/quartz/2.2/mule-quartz.xsd
+       http://www.mulesource.org/schema/mule/scripting/2.2  http://www.mulesource.org/schema/mule/scripting/2.2/mule-scripting.xsd
+       http://www.mulesource.org/schema/mule/xml/2.2 http://www.mulesource.org/schema/mule/xml/2.2/mule-xml.xsd
+       
+    "
+>
+	<!-- import the publishing capability -->
+	<spring:beans>
+    	<spring:import resource="classpath:mule-config.xml" />
+  	</spring:beans>
+	
+	<!-- ================== ::START::  CONNECTORS ==================  -->
+	<file:connector name="RenditionIngestionFileConnector" streaming="false" />
+	<file:connector name="VideoIngestionFileConnector" streaming="false" />
+		
+	<!-- a new-filename message property needs to be set prior to ftp-ing -->
+	<ftp:connector name="CMAFTPConnector"
+				passive="false"
+				numberOfConcurrentTransactedReceivers="1"
+				connectionFactoryClass="org.mule.transport.ftp.FtpConnectionFactory"
+				pollingFrequency="5000"
+				validateConnections="true"
+				outputPattern="#[header:new-filename]" >
+				<file:expression-filename-parser />
+	</ftp:connector>
+	
+	<!-- ================== ::END::  CONNECTORS ==================  -->
+
+
+    <!-- ================== ::START::  ENDPOINTS ================== -->
+	<ftp:endpoint name="CMAFTPEndPoint" user="${ftp.cma.username}" password="${ftp.cma.password}" host="${ftp.cma.hostname}" 
+			port="${ftp.cma.port}" path="${ftp.cma.upload.dir}" />
+
+
+		<!-- Catalyst specific file endpoints -->
+	<file:endpoint  name="RenditionFileEndPoint" path="${rendition.files.dir}"
+			moveToDirectory="${rendition.files.processed.dir}"
+			pollingFrequency="${rendition.files.polling.frequency.milliseconds}" >
+			
+		<file:filename-wildcard-filter pattern="*.xml" />
+	</file:endpoint>
+	
+	<file:endpoint  name="VideoFileEndPoint" path="${video.files.dir}"
+			moveToDirectory="${video.files.processed.dir}"
+			pollingFrequency="${video.files.polling.frequency.milliseconds}" >
+			
+		<file:filename-wildcard-filter pattern="*.xml" />
+	</file:endpoint>
+	
+	<vm:endpoint name="DomToXMLAndFTPEndPoint" path="domToXmlFtp"/>
+	<vm:endpoint name="PostMultipartFormData" path="postMultipartFormData"/>
+	<vm:endpoint name="PostMultipartFormDataFromDom" path="postMultipartFormdataFromDom"/>
+	
+
+	<!-- ================== ::END::  ENDPOINTS ================== -->
+	
+	<!-- ================== ::START::  XML TRANSFORMERS ================== -->
+	<core:byte-array-to-string-transformer name="byte-array-to-string" />
+	
+	<mulexml:xslt-transformer name="rendition-to-output1" outputEncoding="UTF-8" xsl-file="xsl/rendition-to-output1.xsl" />
+	<mulexml:xslt-transformer name="rendition-to-output2" outputEncoding="UTF-8" xsl-file="xsl/rendition-to-output2.xsl" />
+
+	<mulexml:xml-to-dom-transformer name="xml-to-dom" returnClass="org.dom4j.Document" outputEncoding="UTF-8"/>
+	<mulexml:dom-to-xml-transformer name="dom-to-xml" outputEncoding="UTF-8" />
+	
+	<core:custom-transformer name="xml-to-multipart-formdata" class="org.rivetlogic.ingestion.transformers.PayloadToMultipartFormdataTransformer" >
+		<spring:property name="contentType" value="#[string:text/xml]"/>
+		<spring:property name="filename" value="#[string:#[header:new-filename]]"/>
+		<spring:property name="fileFieldname" value="#[string:filedata]"/>
+		<spring:property name="optionalAttributes">
+			<spring:map>
+				<spring:entry key="uploaddirectorypath" value="#[string:#[header:destination]]" ></spring:entry>
+				<spring:entry key="overwrite" value="#[string:true]" ></spring:entry>
+			</spring:map>
+		</spring:property>
+		
+	</core:custom-transformer> 
+	<!-- ================== ::END::  XML TRANSFORMERS ==================  -->
+	
+	<!--  ================== ::START::  Content Ingestion Services ==================  -->
+	<core:model name="ContentIngestionTransformation">
+	
+		<core:default-connector-exception-strategy>
+			<vm:outbound-endpoint ref="ErrorEndPoint"/>
+		</core:default-connector-exception-strategy>
+		
+        <core:service name="RenditionContentIngestionPoller">
+            <core:inbound>
+                <core:inbound-endpoint ref="RenditionFileEndPoint" connector-ref="RenditionIngestionFileConnector" synchronous="true"  /> 
+            </core:inbound>
+
+           <core:outbound matchAll="true">
+
+				<core:pass-through-router>
+                	 <!-- do xml-to-dom transformation so that we can read the filename from the file itself
+-->
+                	 <vm:outbound-endpoint ref="PostMultipartFormDataFromDom"  transformer-refs="rendition-to-output1 xml-to-dom" >
+			              <core:message-properties-transformer>
+			                <core:add-message-property key="new-filename" value="#[string:#[xpath:/output-one/@identifier]-1.xml]"/>
+			                <core:add-message-property key="destination" value="${rendition.files.upload.path}"/>							
+			            </core:message-properties-transformer>
+                	</vm:outbound-endpoint>    
+                </core:pass-through-router>
+                <core:pass-through-router>
+               		 <vm:outbound-endpoint ref="PostMultipartFormDataFromDom" transformer-refs="rendition-to-output2 xml-to-dom"  >
+               		 		<core:message-properties-transformer>
+				               
+				                <core:add-message-property key="new-filename" value="#[string:#[xpath://id]-2.xml]"/>
+				               <core:add-message-property key="destination" value="${rendition.files.upload.path}"/>		
+				            </core:message-properties-transformer>
+               		 </vm:outbound-endpoint>              	
+                </core:pass-through-router>
+                
+            </core:outbound> 
+            
+            <core:default-service-exception-strategy>
+				<vm:outbound-endpoint ref="ErrorEndPoint"/>
+			</core:default-service-exception-strategy>
+			
+        </core:service>
+                
+   	</core:model>
+     
+  	<core:model name="CMSUpload">
+		<core:default-connector-exception-strategy>
+			<vm:outbound-endpoint ref="ErrorEndPoint"/>
+		</core:default-connector-exception-strategy>
+		
+		<core:service name="PostMultipartFormDataService">
+            <core:inbound>
+                <core:inbound-endpoint ref="PostMultipartFormData" transformer-refs="xml-to-multipart-formdata" synchronous="true">
+               		   <core:message-properties-transformer >
+                		   
+                		   	<core:add-message-property key="Content-Type" value="#[string:multipart/form-data; boundary=#[header:formdata-boundary]]"/>
+			           </core:message-properties-transformer>
+                </core:inbound-endpoint> 
+                
+                <core:inbound-endpoint ref="PostMultipartFormDataFromDom" transformer-refs="dom-to-xml xml-to-multipart-formdata" synchronous="true">
+               		   <core:message-properties-transformer >
+                		   
+                		   	<core:add-message-property key="Content-Type" value="#[string:multipart/form-data; boundary=#[header:formdata-boundary]]"/>
+			           </core:message-properties-transformer>
+                </core:inbound-endpoint> 
+                
+            </core:inbound>
+
+
+            <core:outbound  matchAll="true">
+            
+            	<core:pass-through-router>
+                	<stdio:outbound-endpoint system="OUT" ></stdio:outbound-endpoint>
+                </core:pass-through-router>
+                
+                <core:pass-through-router>
+                	<http:outbound-endpoint  address="${http.cma.upload.address}" method="POST"  />
+				</core:pass-through-router>
+            </core:outbound>
+        </core:service>
+        
+        <core:service name="CMAFtpPoller">
+            <core:inbound>
+                <!-- this endpoint is used by the functional test -->
+                <core:inbound-endpoint ref="DomToXMLAndFTPEndPoint" transformer-refs="dom-to-xml" synchronous="true"/> 
+            </core:inbound>
+
+            <core:outbound >
+                     
+                <core:pass-through-router>
+					<core:outbound-endpoint ref="CMAFTPEndPoint" connector-ref="CMAFTPConnector" />
+				</core:pass-through-router>
+            </core:outbound>
+        </core:service>
+        
+    </core:model>
+	
+	
+</mule>

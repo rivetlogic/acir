@@ -1,0 +1,67 @@
+<assembly>
+    <id>bin</id>
+    <!-- Generates a zip package containing the needed files -->
+    <formats>
+        <format>zip</format>
+    </formats>
+
+
+
+    <fileSets>
+        <!--  Adds startup scripts to the root directory of zip package -->
+        <fileSet>
+            <directory>mule-bundle</directory>
+            <outputDirectory></outputDirectory>
+            <includes>
+                <include>**</include>
+            </includes>
+        </fileSet>
+        
+        <!-- adds cma-cfg.properties file -->
+        <fileSet>
+            <directory>src/main/resources/core</directory>
+            <outputDirectory>/conf/core</outputDirectory>
+            <includes>
+                <include>*.properties</include>
+            </includes>
+        </fileSet>
+        
+        <!-- adds jar package to the lib/user directory -->
+        <fileSet>
+            <directory>target</directory>
+            <outputDirectory>/lib/user</outputDirectory>
+            <includes>
+                <include>*.jar</include>
+            </includes>
+        </fileSet>
+    </fileSets>
+    
+    
+        <!-- Adds dependencies to zip package under lib directory -->
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>/lib/user</outputDirectory>
+            <includes>
+            	<!-- format of include =>  group:artifact-id -->
+            	<include>org.alfresco:alfresco-core</include>
+            	<include>org.alfresco:alfresco-data-model</include>
+            	<include>org.alfresco:alfresco-repository</include>
+            	<include>org.rivetlogic:cma-api</include>
+            	<include>org.rivetlogic:cma-impl</include>
+            	<include>acegisecurity:acegi-security</include>
+            	<include>com.rivetlogic:base64</include>
+            	<include>org.codehaus.castor:castor</include>
+            	<include>commons-codec:commons-codec</include>
+            	<include>commons-logging:commons-logging</include>
+            	<include>dom4j:dom4j</include>
+            	<include>org.springframework:spring-core</include>
+            	<include>org.springframework.extensions.surf:spring-surf-core</include>
+            	<include>org.mule.transports:mule-transport-http</include>
+            	<include>org.apache.solr:solr-solrj</include>
+            	<include>org.json:json</include>
+            	<include>javolution:javolution</include>
+            </includes>
+            <excludes></excludes>
+        </dependencySet>
+    </dependencySets>
+</assembly>

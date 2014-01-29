@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+    <bean id="cmaConfig_1" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="ignoreUnresolvablePlaceholders">
+            <value>false</value>
+        </property>
+        <property name="locations">
+            <list>
+                <value>classpath:core/cma-cfg.properties</value>
+            </list>
+        </property>
+    </bean>
+
+	<import resource="classpath:core/cma-core-context.xml" />
+
+</beans>

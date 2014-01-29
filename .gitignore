@@ -4,3 +4,10 @@
 *.jar
 *.war
 *.ear
+.idea*
+acir/.*
+acir-alfresco/.*
+acir-alfresco/acir-alfresco.iml
+acir/target/*
+acir-alfresco/target/*
+acir/.settings/*

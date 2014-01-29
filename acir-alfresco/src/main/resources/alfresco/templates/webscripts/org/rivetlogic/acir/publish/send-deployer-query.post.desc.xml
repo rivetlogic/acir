@@ -1,0 +1,20 @@
+<!-- This webscript builds an ACIr query XML and post it to the uri configured at:
+     /Company Home/Data Dictionary/Web Scripts/deployer-extract-request-config.xml
+     The webscript receives a set of POST data.  Everything but the extract-id and uuid(s) is optional.
+       - extract-id 			... A single extract-id that is the ID of the query that will be send to ACIr. 
+       - uuid   				... A single/array of uuids.  Each parameter is called uuid. Gets mapped to an array.
+       - storeRef				... The store ref from where to read the data.
+       - deployer				... A single/array of deployers.  Each parameter is called deployer.
+       - contentTransformer		... A single/array of content transformers.  Each parameter is called contentTransformer.
+       - fileNameTransformer	... A single/array of file name transformers.  Each parameter is called fileNameTransformer.
+       - dependencyResolver		... A single/array of dependency resolvers.  Each parameter is called dependencyResolver.
+       - filter					... A single/array of filters.  Each parameter is called filter.
+       - notifier				... A single/array of filters.  Each parameter is called notifier.
+  -->
+<webscript>
+	<shortname>acir-queryxml</shortname>
+	<description>Build the query xml file for ACIR and perform a post</description>
+  	<url>/org/rivetlogic/acir/senddeployerquery</url>
+  	<authentication>user</authentication>
+	<transaction>required</transaction>
+</webscript>

@@ -1,0 +1,70 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.rivetlogic</groupId>
+	<artifactId>acir-alfresco</artifactId>
+	<version>4.1.2-E-2</version>
+	<packaging>amp</packaging>
+
+    <parent>
+        <groupId>org.rivetlogic</groupId>
+        <artifactId>superpom</artifactId>
+        <version>4.1.2-E-2</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>2.3.2</version>
+				<configuration>
+					<source>1.5</source>
+					<target>1.5</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.alfresco.maven.plugin</groupId>
+				<artifactId>maven-amp-plugin</artifactId>
+				<version>3.0.0</version>
+				<extensions>true</extensions>
+
+			</plugin>
+
+		</plugins>
+		
+		<!-- filter the resources, mostly setting port on 8080 -->
+		<resources>
+			
+			<!-- to include the Alfresco E4X Utils JAR -->
+			<resource>
+				<targetPath>../${project.build.finalName}</targetPath>
+				<filtering>false</filtering>
+				<directory>.</directory>
+				<includes>
+					<include>lib/**</include>
+				</includes>
+			</resource>
+
+		</resources>
+		
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>alfrescoE4X</groupId>
+			<artifactId>alfrescoE4XUtils</artifactId>
+			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/AlfrescoE4XUtils.jar</systemPath>
+		</dependency>
+	</dependencies>
+
+
+</project>

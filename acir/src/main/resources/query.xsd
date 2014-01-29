@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema targetNamespace="http://acir.rivetlogic.org/QuerySchema"  xmlns:xs="http://www.w3.org/2001/XMLSchema" 
+	xmlns="http://acir.rivetlogic.org/QuerySchema" elementFormDefault="qualified" version="1.0">
+	<xs:element name="extract-requests">
+		<xs:complexType>
+			<xs:sequence>
+                <xs:element name="extracts-id" type="xs:string" minOccurs="0" maxOccurs="1" />
+                <!-- indicates whether there should be an ack file for no results or not - default is true -->
+                <xs:element name="ack-file-for-no-results" type="xs:boolean" minOccurs="0" maxOccurs="1" /> 
+                <xs:element ref="definitions" minOccurs="1" maxOccurs="1" />
+                <xs:element ref="extract-request" minOccurs="1" maxOccurs="unbounded" />
+           </xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="definitions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="dependency-resolver-definitions" minOccurs="0" maxOccurs="1" />
+				<xs:element ref="filter-definitions" minOccurs="0" maxOccurs="1" />
+				<xs:element ref="transformer-definitions" minOccurs="0" maxOccurs="1" />
+				<xs:choice>
+					<xs:element ref="deployer-definitions" minOccurs="1" maxOccurs="1" />
+					<xs:element ref="undeployer-definitions" minOccurs="1" maxOccurs="1" />
+				</xs:choice>
+				<xs:element ref="notifier-definitions" minOccurs="0" maxOccurs="1" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="extract-request">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="store-ref" type="xs:string" minOccurs="1" maxOccurs="1"></xs:element>
+				<xs:element ref="queries" minOccurs="1" maxOccurs="1" />
+				<xs:element ref="dependency-resolvers" minOccurs="0" maxOccurs="1" />
+				<xs:element ref="filters" minOccurs="0" maxOccurs="1" />
+				<xs:element ref="transformers" minOccurs="0" maxOccurs="1" />
+				<xs:choice>
+					<xs:element ref="deployers" minOccurs="1" maxOccurs="1" />
+					<xs:element ref="undeployers" minOccurs="1" maxOccurs="1" />
+				</xs:choice>
+				<xs:element ref="notifiers" minOccurs="0" maxOccurs="1" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+    
+    <xs:element name="property">
+        <xs:complexType>
+            <xs:attribute name="name" type="xs:string" use="required" />
+        </xs:complexType>
+    </xs:element>
+
+	<xs:element name="properties">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="property" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<!-- START: deployer related definitions -->
+	<xs:element name="deployer">
+        <xs:complexType>
+            <xs:attribute name="ref" type="xs:string" use="required" />
+        </xs:complexType>
+    </xs:element>
+    
+	<xs:element name="deployers">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="deployer" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="deployer-definition">
+		<xs:complexType>
+            <xs:sequence>
+                <xs:element ref="properties" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+			<xs:attribute name="class" type="xs:string" use="required" />
+			<xs:attribute name="id" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="deployer-definitions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="deployer-definition" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!-- END: deployer related definitions -->
+	
+	
+	<!-- START: undeployer related definitions -->
+	<xs:element name="undeployer">
+        <xs:complexType>
+            <xs:attribute name="ref" type="xs:string" use="required" />
+        </xs:complexType>
+    </xs:element>
+    
+	<xs:element name="undeployers">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="undeployer" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="undeployer-definition">
+		<xs:complexType>
+            <xs:sequence>
+                <xs:element ref="properties" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+			<xs:attribute name="class" type="xs:string" use="required" />
+			<xs:attribute name="id" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="undeployer-definitions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="undeployer-definition" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!-- END: undeployer related definitions -->
+	
+	<!-- START: notifier related definitions -->
+	<xs:element name="notifier">
+        <xs:complexType>
+            <xs:attribute name="ref" type="xs:string" use="required" />
+        </xs:complexType>
+    </xs:element>
+    
+	<xs:element name="notifiers">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="notifier" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="notifier-definition">
+		<xs:complexType>
+            <xs:sequence>
+                <xs:element ref="properties" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+			<xs:attribute name="class" type="xs:string" use="required" />
+			<xs:attribute name="id" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="notifier-definitions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="notifier-definition" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!-- END: notifier related definitions -->
+	
+	<!-- START: transformer related definitions -->
+	<xs:element name="transformer-definition">
+		<xs:complexType>
+            <xs:sequence>
+                <xs:element ref="properties" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+			<xs:attribute name="class" type="xs:string" use="required" />
+			<xs:attribute name="id" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+
+	
+	<xs:element name="transformer-definitions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="content-transformer-definitions" minOccurs="0" maxOccurs="1" />
+				<xs:element ref="file-name-transformer-definitions" minOccurs="0" maxOccurs="1" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="file-name-transformer-definitions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="transformer-definition" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="content-transformer-definitions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="transformer-definition" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="file-name-transformers">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="transformer" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="content-transformers">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="transformer" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="transformer">
+		<xs:complexType>
+			<xs:attribute name="ref" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="transformers">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="content-transformers" minOccurs="0" maxOccurs="1" />
+				<xs:element ref="file-name-transformers" minOccurs="0" maxOccurs="1" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!-- END: transformer related definitions -->
+	
+	<!-- START: filter related definitions -->
+	<xs:element name="filter-definition">
+		<xs:complexType>
+            <xs:sequence>
+                <xs:element ref="properties" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+			<xs:attribute name="class" type="xs:string" use="required" />
+			<xs:attribute name="id" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="filter-definitions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="filter-definition" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="filter">
+		<xs:complexType>
+			<xs:attribute name="ref" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="filters">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="filter" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!-- END: filter related definitions -->
+	
+	<!-- START: dependency resolver related definitions -->
+	<xs:element name="dependency-resolver-definition">
+		<xs:complexType>
+            <xs:sequence>
+                <xs:element ref="properties" minOccurs="0" maxOccurs="1"/>
+            </xs:sequence>
+			<xs:attribute name="class" type="xs:string" use="required" />
+			<xs:attribute name="id" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+	
+	<xs:element name="dependency-resolver-definitions">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="dependency-resolver-definition" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="dependency-resolver">
+		<xs:complexType>
+			<xs:attribute name="ref" type="xs:string" use="required" />
+		</xs:complexType>
+	</xs:element>
+
+	<xs:element name="dependency-resolvers">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="dependency-resolver" minOccurs="0" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<!-- END: dependency resolver related definitions -->
+	
+	<xs:element name="queries">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="query" type="xs:string" minOccurs="1" maxOccurs="unbounded" />
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesource.org/schema/mule/core/2.2"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:core="http://www.mulesource.org/schema/mule/core/2.2"
+    xmlns:file="http://www.mulesource.org/schema/mule/file/2.2"
+    xmlns:vm="http://www.mulesource.org/schema/mule/vm/2.2"
+    xmlns:smtp="http://www.mulesource.org/schema/mule/smtp/2.2"
+    xmlns:stdio="http://www.mulesource.org/schema/mule/stdio/2.2"
+    xmlns:email="http://www.mulesource.org/schema/mule/email/2.2"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xmlns:http="http://www.mulesource.org/schema/mule/http/2.2"
+    xmlns:quartz="http://www.mulesource.org/schema/mule/quartz/2.2"
+    xmlns:scripting="http://www.mulesource.org/schema/mule/scripting/2.2"
+    
+    xsi:schemaLocation="
+       http://www.mulesource.org/schema/mule/core/2.2  http://www.mulesource.org/schema/mule/core/2.2/mule.xsd
+       http://www.mulesource.org/schema/mule/file/2.2  http://www.mulesource.org/schema/mule/file/2.2/mule-file.xsd
+       http://www.mulesource.org/schema/mule/vm/2.2    http://www.mulesource.org/schema/mule/vm/2.2/mule-vm.xsd
+       http://www.mulesource.org/schema/mule/smtp/2.2  http://www.mulesource.org/schema/mule/smtp/2.2/mule-smtp.xsd
+       http://www.mulesource.org/schema/mule/stdio/2.2 http://www.mulesource.org/schema/mule/stdio/2.2/mule-stdio.xsd
+       http://www.mulesource.org/schema/mule/email/2.2 http://www.mulesource.org/schema/mule/email/2.2/mule-email.xsd
+       http://www.springframework.org/schema/context   http://www.springframework.org/schema/context/spring-context-2.5.xsd
+       http://www.mulesource.org/schema/mule/http/2.2  http://www.mulesource.org/schema/mule/http/2.2/mule-http.xsd
+       http://www.mulesource.org/schema/mule/quartz/2.2 http://www.mulesource.org/schema/mule/quartz/2.2/mule-quartz.xsd
+       http://www.mulesource.org/schema/mule/scripting/2.2  http://www.mulesource.org/schema/mule/scripting/2.2/mule-scripting.xsd
+    "
+>
+	<context:property-placeholder location="core/cma-cfg.properties"/>
+
+	<!-- ================== ::START::  CONNECTORS ==================  -->
+	<file:connector name="QueryFileConnector" streaming="true" />
+	<http:connector name="QueryHttpConnector" />
+	
+	<stdio:connector name="SystemStreamConnector" />
+	<smtp:connector name="SMTPConnector" />
+	
+	<!-- ================== ::END::  CONNECTORS ==================  -->
+	
+	<!-- ================== ::START::  ENDPOINTS ================== -->
+	<file:endpoint  name="QueryFileEndPoint" path="${query.dir}"
+			moveToDirectory="${query.processed.dir}"
+			pollingFrequency="${query.polling.frequency.milliseconds}" outputPattern="#[DATE]_#[COUNT].xml">
+			
+		<file:filename-wildcard-filter pattern="*.xml" />
+	</file:endpoint>
+
+    <http:endpoint name="QueryHttpEndPoint" host="${acir.rest.hostname}" port="${acir.rest.port}" path="${acir.rest.path}" method="POST" synchronous="true" >
+		<custom-transformer name="HttpParams" class="org.mule.transport.http.transformers.HttpRequestBodyToParamMap" />
+	</http:endpoint>
+
+	<vm:endpoint name="ErrorEndPoint" path="errors"/>
+	<vm:endpoint name="FilteredErrorEndPoint" path="filtered-errors"/>
+	<vm:endpoint name="SplitRequestsEndPoint" path="splitRequests"/>
+	<vm:endpoint name="ReportProcessorEndPoint" path="reportProcessor"/>
+	<!-- ================== ::END::  ENDPOINTS ================== -->
+
+	<!-- ================== ::START::  TRANSFORMERS ================== -->
+	<core:custom-transformer name="emptyResponseTransformer" class="org.rivetlogic.common.transformers.EmptyResponseTransformer" />
+	<core:custom-transformer name="ExceptionToString" class="org.rivetlogic.common.transformers.ExceptionToString" />
+	<core:byte-array-to-string-transformer name="ByteArrayToString" />
+	<core:string-to-byte-array-transformer name="StringToByteArray"/>
+	<email:object-to-mime-transformer name="ObjectToMimeMessage" />
+	<!-- ================== ::END::  TRANSFORMERS  ================== -->
+	
+	<core:model name="DataExport">
+		<core:default-connector-exception-strategy>
+			<vm:outbound-endpoint ref="ErrorEndPoint"/>
+		</core:default-connector-exception-strategy>
+		
+		<core:service name="QueryFolderPoller">
+		
+			<core:inbound>
+				<core:inbound-endpoint ref="QueryFileEndPoint" connector-ref="QueryFileConnector"/> 
+			</core:inbound>
+			<core:component>
+				<core:prototype-object class="org.rivetlogic.export.components.ExportXMLProcessor">
+					<core:property key="debug" value="true" />
+					<core:property key="xsdPath" value="query.xsd" />
+					<core:property key="XPath" value="/extract-requests/extract-request" />
+					<core:property key="tmpFolder" value="${query.tmp.dir}" />
+	                <core:property key="ackPath" value="${query.ack.dir}" />
+	                <core:property key="cmaUrl" value="${cma.service.endpoint.url}" />
+	                <core:property key="cmaUsername" value="${cma.username}" />
+	                <core:property key="cmaPassword" value="${cma.password}" />
+				</core:prototype-object>
+			</core:component>
+			<core:outbound>
+							
+				<core:filtering-router>
+					<core:outbound-endpoint ref="ReportProcessorEndPoint" />
+					<core:payload-type-filter expectedType="org.rivetlogic.export.components.data.ReportData" />
+				</core:filtering-router>
+				
+				<core:pass-through-router >
+					<core:outbound-endpoint ref="SplitRequestsEndPoint" />
+				</core:pass-through-router>
+
+			</core:outbound>
+			<core:default-service-exception-strategy>
+				<vm:outbound-endpoint ref="ErrorEndPoint"/>
+			</core:default-service-exception-strategy>
+		</core:service>
+
+		<core:service name="QueryHttpRequest">
+		
+			<core:inbound>
+				<core:inbound-endpoint ref="QueryHttpEndPoint" connector-ref="QueryHttpConnector" responseTransformer-refs="emptyResponseTransformer" />
+			</core:inbound>
+			<core:component>
+				<core:prototype-object class="org.rivetlogic.export.components.HttpExportXMLProcessor">
+					<core:property key="debug" value="true" />
+					<core:property key="xsdPath" value="query.xsd" />
+					<core:property key="XPath" value="/extract-requests/extract-request" />
+					<core:property key="tmpFolder" value="${query.tmp.dir}" />
+	                <core:property key="ackPath" value="${query.ack.dir}" />
+	                <core:property key="cmaUrl" value="${cma.service.endpoint.url}" />
+	                <core:property key="cmaUsername" value="${cma.username}" />
+	                <core:property key="cmaPassword" value="${cma.password}" />
+				</core:prototype-object>
+			</core:component>
+			<core:outbound>
+				<!-- may need to change the response -->
+				<core:filtering-router>
+					<core:outbound-endpoint ref="ReportProcessorEndPoint" />
+					<core:payload-type-filter expectedType="org.rivetlogic.export.components.data.ReportData" />
+				</core:filtering-router>
+				
+				<core:pass-through-router >
+					<core:outbound-endpoint ref="SplitRequestsEndPoint" />
+				</core:pass-through-router>
+
+			</core:outbound>
+			<core:default-service-exception-strategy>
+				<vm:outbound-endpoint ref="ErrorEndPoint"/>
+			</core:default-service-exception-strategy>
+		</core:service>
+		
+		<core:service name="QueryProcessor">
+			<core:inbound>
+				<core:inbound-endpoint ref="SplitRequestsEndPoint" />
+			</core:inbound>
+			<core:component>
+				<core:prototype-object class="org.rivetlogic.export.components.XmlExtractRequestProcessor">
+					<core:property key="cmaUrl" value="${cma.service.endpoint.url}" />
+	                <core:property key="cmaUsername" value="${cma.username}" />
+	                <core:property key="cmaPassword" value="${cma.password}" />
+				</core:prototype-object>
+			</core:component>
+			<core:outbound>
+				<core:filtering-router>
+					<core:outbound-endpoint ref="ReportProcessorEndPoint" />
+					<core:payload-type-filter expectedType="org.rivetlogic.export.components.data.ReportData" />
+				</core:filtering-router>
+				<core:pass-through-router>
+					<stdio:outbound-endpoint connector-ref="SystemStreamConnector" system="OUT"/>
+				</core:pass-through-router>
+			</core:outbound>
+			<core:default-service-exception-strategy>
+				<vm:outbound-endpoint ref="ErrorEndPoint"/>
+			</core:default-service-exception-strategy>
+		</core:service>
+		
+		<core:service name="ReportProcessor">
+			<core:inbound>
+				<core:inbound-endpoint ref="ReportProcessorEndPoint" />
+				<quartz:inbound-endpoint name="QuartzReportTicker" repeatInterval="12000" jobName="reportOutputTimer" >
+					<property key="payloadClassName" value="org.mule.providers.NullPayload" />
+					<quartz:event-generator-job />
+				</quartz:inbound-endpoint>
+			</core:inbound>
+			<core:component >
+				<core:prototype-object class="org.rivetlogic.export.components.ReportProcessor">
+					<core:property key="ackPath" value="${query.ack.dir}" />
+				</core:prototype-object>			
+			</core:component>
+			<!-- <core:outbound>
+				<core:pass-through-router>
+					<stdio:outbound-endpoint connector-ref="SystemStreamConnector" system="OUT"/>
+				</core:pass-through-router>
+			</core:outbound> -->
+			<core:default-service-exception-strategy>
+				<vm:outbound-endpoint ref="ErrorEndPoint"/>
+			</core:default-service-exception-strategy>
+		</core:service>
+		
+	
+		<!-- Email on error -->
+		<core:service name="ErrorFilter">
+			<core:inbound>
+				<vm:inbound-endpoint ref="ErrorEndPoint" />
+			</core:inbound>
+			<core:component class="org.rivetlogic.common.components.ErrorFilter" />
+			<core:outbound>
+				<core:pass-through-router>
+					<vm:outbound-endpoint ref="FilteredErrorEndPoint" />
+				</core:pass-through-router>
+			</core:outbound>
+		</core:service>
+
+		<core:service name="ErrorMailer">
+			<core:inbound>
+				<vm:inbound-endpoint ref="FilteredErrorEndPoint" />
+			</core:inbound>
+			<core:outbound>
+				<core:pass-through-router>
+					<smtp:outbound-endpoint host="${smtp.host}" port="${smtp.port}" from="${error.from.email}" to="${error.to.email}"
+							transformer-refs="ExceptionToString ObjectToMimeMessage" subject="${error.subject}" />
+				</core:pass-through-router>
+			</core:outbound>
+		</core:service>
+ 
+	</core:model> 	
+</mule>

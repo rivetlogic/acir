@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extract-requests xmlns="http://acir.rivetlogic.org/QuerySchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="query.xsd">
+    <extracts-id>id123</extracts-id>
+    <!-- should be true/false, default is true
+         useful when queries are constantly being polled -->
+    <ack-file-for-no-results>false</ack-file-for-no-results>  
+	<definitions>
+	
+			
+		<dependency-resolver-definitions>
+			<dependency-resolver-definition
+				class="org.rivetlogic.export.dependencyresolvers.EmptyDependencyResolver"
+				id="empty_dependency_resolver" />
+		</dependency-resolver-definitions>
+		
+		<filter-definitions>
+				<filter-definition class="org.rivetlogic.export.filters.DateTimeFilter" id="date_time_filter">
+					<properties>
+						<property name="olderThan">2010-01-01T00:00:00</property>
+						<property name="newerThan">2008-01-01T00:00:00</property>
+					</properties>
+				</filter-definition>
+		</filter-definitions>
+		
+		<transformer-definitions>
+		
+			<content-transformer-definitions>
+				<transformer-definition class="org.rivetlogic.export.transformers.content.NullContentTransformer"
+				                        id="dummy_content_transformer_1"></transformer-definition>
+				<transformer-definition class="org.rivetlogic.export.transformers.content.NullContentTransformer"
+				                        id="dummy_content_transformer_2"></transformer-definition>
+				<!-- 
+					this is an example of what a DRM removing transformer would look like.
+					
+				<transformer-definition class="org.rivetlogic.components.export.transformers.RemoveDRMTransformer" id="remove_drm_transformer">
+				   <properties>
+				       <property name="password">R3sdTde2d%a</property>
+				   </properties>
+				</transformer-definition>
+				-->
+			</content-transformer-definitions>
+
+			<file-name-transformer-definitions>
+				<transformer-definition class="org.rivetlogic.export.transformers.filename.ReplaceFirstTransformer" id="normalize_path_transformer">
+                    <!-- 
+                       this transformer will transform a file name from:
+                            /company_home/hbp/products/Higher Ed/130/2008/108038/108038-PDF-ENG/ancillary/some_files2.txt
+                       to: 
+                            108038/108038-PDF-ENG/some_files2.txt
+                     -->
+					<properties>
+						<property name="targetRegex">/company_home/hbp/products/[^/]+/[^/]+/[^/]+/([^/]+/[^/]+/)([^/]+/)+</property>
+						<property name="replacement">$1</property>
+					</properties>
+				</transformer-definition>
+
+				<transformer-definition class="org.rivetlogic.export.transformers.filename.ReplaceFirstTransformer" id="dummy_filename_transformer">
+				    <!-- this transformer replaces 'a' with 'a', essentially doing nothing -->
+					<properties>
+						<property name="targetRegex">a</property>
+						<property name="replacement">a</property>
+					</properties>
+				</transformer-definition>
+			</file-name-transformer-definitions>
+		</transformer-definitions>
+
+		<deployer-definitions>
+			<deployer-definition class="org.rivetlogic.export.deployers.LocalDeployer" id="local_deployer_1">
+				<properties>
+					<property name="deployTo">/opt/clients/rivet/acir-upgrades/4.1.2/acir-4.1.2-E-0/queries/export/</property>
+				</properties>
+			</deployer-definition>
+			<!--
+			this is an example of an FTP based deployer. 
+			<deployer-definition class="org.rivetlogic.components.export.deployers.FtpDeployer" id="ftp_deployer_destination.com">
+			    <properties>
+	                <property name="deployTo">ftp://ftp.destination.com/hbr/articles/</property>
+	                <property name="username">gooduser</property>
+	                <property name="password">passwd</property>
+			    </properties>
+			</deployer-definition>
+			-->
+		</deployer-definitions>
+		
+		<notifier-definitions>
+			<notifier-definition
+				class="org.rivetlogic.export.notifiers.NullCMSNotifier" id="dummy_cms_notifier" />
+		</notifier-definitions>
+		
+	</definitions>
+
+    <extract-request>
+    	<store-ref>workspace://SpacesStore</store-ref>
+	    <!--
+	    this query extract searches for s2 _and_ p2 files in availability 108038-PDF-ENG, 
+	    execute dummy_transformer_1 against the resulting content, 
+	    execute normalize_path_transformer and dummy_filename_transformer, and
+	    deploy the files using local_deployer_1
+	    
+	    note: 
+	       Due to XPATH standard limitations products and availabilities that start with a number need to be escaped as follows:
+	           digit  |  escaped-digit
+	           _______________________
+                 1    |  _x0031_
+                 2    |  _x0032_
+                 ............
+                 9    |  _x0039_
+	    -->
+		<queries>
+            <!-- the query line below searches for files which have a name pattern "*s2.pdf" 
+                    that are of type "content"(not a folder), that reside off of folder "output" in the availability "108038-PDF-ENG"
+            -->
+			<query>@cm\:name:"*.pdf" AND TYPE:"cm:content"</query>
+		</queries>
+		<transformers>
+			<content-transformers>
+				<transformer ref="dummy_content_transformer_1" />
+			</content-transformers>
+			<file-name-transformers>
+				<transformer ref="normalize_path_transformer" />
+				<transformer ref="dummy_filename_transformer" />
+			</file-name-transformers>
+		</transformers>
+		<deployers>
+			<deployer ref="local_deployer_1" />
+		</deployers>
+	</extract-request>
+
+	<extract-request>
+		<store-ref>workspace://SpacesStore</store-ref>
+		<queries>
+			<query>@cm\:name:"*xml" AND TYPE:"cm:content" AND @cm\:modified:[2008\-08\-16T00:00:00 TO 2012\-09\-10T00:00:00]</query>
+		</queries>
+		<dependency-resolvers>
+			<dependency-resolver ref="empty_dependency_resolver" />
+		</dependency-resolvers>
+		<!-- <filters>
+			<filter ref="date_time_filter" />
+		</filters> -->
+		<transformers>
+			<content-transformers>
+				<transformer ref="dummy_content_transformer_2" />
+			</content-transformers>
+			<file-name-transformers>
+				<transformer ref="dummy_filename_transformer" />
+			</file-name-transformers>
+		</transformers>
+		<deployers>
+			<deployer ref="local_deployer_1" />
+		</deployers>
+		<notifiers>
+			<notifier ref="dummy_cms_notifier" />
+		</notifiers>
+	</extract-request>
+
+</extract-requests>

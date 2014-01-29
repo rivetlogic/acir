@@ -1,0 +1,64 @@
+Release Notes
+
+4.1.2-E-2
+- Added workaround for targetRegex in ReplaceFirstTransformer
+
+4.1.2-E-1
+- Added nodeService bean to the DependencyResolvers
+
+4.1.2-E-0
+- Compatible with Alfresco 4.1.2
+  	
+3.4.2-E-1
+- Creating build from forward merge of 3.4.0-E-x branch releases
+  	- Includes notifier changes
+  	
+3.4.2-E-0
+- Compatible with Alfresco 3.4.2
+- Changed packaging to easily deployable zip
+
+3.4.0-E-3
+- Added unpublish 
+
+3.4.0-E-3
+- Added notifier functionality
+
+3.4.0-E-2
+- Changed DependencyResolver api
+	- Split into SimpleDependencyResolver and DependencyResolverAndRetriever (also downloads)
+
+3.4.0-E-1
+- Changes to DependencyResolver interface
+- Made ObjectFactory able to invoke superclass setters
+
+3.4.0-E-0
+- Compatible with Alfresco 3.4.0
+
+3.3.2-E-1
+- Added capability to upload content via post webscript
+- Added dependency to patched mule-transport-http-2.2.1 JAR
+  -- The fix is already in mule 3.1.x, so this dependency can be removed when upgrading
+  -- Note: as part of the deployment, the mule-transport-http-2.2.1-E-1.jar (in Rivet repo), should in deployed to lib/user directory 
+           to override that in lib/mule
+- Re-wrote dependency resolver integration to make it more scalable
+
+3.3.2-E-0
+- Compatible with Alfresco 3.3.2
+- Upgraded and integrated with RAAr 3.3.2-E-0
+- Extracted certain properties for easier configuration
+- Removed PDFUnprotectContentTransformer for public release
+- Added filtering capability
+- Added meta-data extractor
+- Added http restful service for posting queries
+- Added DependencyResolver plugin
+- Added capability to set dependencies for content transformer based on Alfresco PATH
+- Bug fixes (including ACIR-2)
+
+0.0.8
+- Compatible with Alfresco 2.2.1
+
+0.0.7
+- introduced PDFUnprotectContentTransformer
+
+0.0.6
+- introduced parseBoolean function into IntegrationUtils class to recognize 1,y,t,true,yes as true, and everything else as false.

@@ -1,0 +1,235 @@
+<extract-requests-template>
+
+<!-- This template is broken up in to the actual template for XML that will be sent to ACIr,
+     default and template XML snippets and the host & port ACIr are listening on.  The store
+     ref, query, content & file name transformers and deployers are configurable.
+
+     The default values are editable as is the template where the #{xxxx} will be substituted.
+     If new transformers/deployers need to be defined, they should be added to the XML template (in the 3rd part of the file).
+  -->
+
+<!-- START ACIr URL -->
+
+<!-- ACIr URI - replace this with the host and port ACIr is listening on -->
+<acir-url>http://localhost:11110/publish-query</acir-url>
+
+<!-- END ACIr URL -->
+
+
+<!-- START :: default and template XML snippets -->
+
+<!-- store-ref template and default -->
+<store-ref-template><store-ref>#{store-ref}</store-ref></store-ref-template>
+<store-ref-default><store-ref>workspace://SpacesStore</store-ref></store-ref-default>
+
+<!-- query template.  Note: no default -->
+<query-template>
+	<query>@sys\:node-uuid:"#{uuid}" AND TYPE:"cm:content"</query>
+</query-template>
+
+<!-- dependency resolvers template & default -->
+<dependency-resolver-template>
+    <dependency-resolver ref="#{dependency-resolver}" />
+</dependency-resolver-template>
+
+<dependency-resolver-default>
+        <!--<dependency-resolver ref="empty_dependency_resolver"/> -->
+</dependency-resolver-default>
+
+<!-- filters template & default -->
+<filter-template>
+    <filter ref="#{filter}" />
+</filter-template>
+
+<filter-default>
+        <!--<filter ref="date_time_filter"/> -->
+</filter-default>
+
+<!-- content transformer template & default -->
+<content-transformer-template>
+	<transformer ref="#{transformer}" />
+</content-transformer-template>
+
+<content-transformer-default>
+	<transformer ref="dummy_content_transformer_1" />
+</content-transformer-default>
+
+<!-- file name transformer template & default -->
+<file-name-transformers-template>
+	<transformer ref="#{transformer}" />
+</file-name-transformers-template>
+
+<file-name-transformers-default>
+	<transformer ref="normalize_path_transformer" />
+	<transformer ref="transcode_filename_transformer" />
+</file-name-transformers-default>
+
+<!-- deployer template & default -->
+<deployer-template>
+	<deployer ref="#{deployer}" />
+</deployer-template>
+<deployer-default>
+	<deployer ref="local_deployer_1" />
+</deployer-default>
+
+<!-- notifiers template & default -->
+<notifier-template>
+    <notifier ref="#{notifier}" />
+</notifier-template>
+
+<notifier-default>
+</notifier-default>
+
+<!-- END :: default and template XML snippets -->
+
+<!-- START:: Template for the actual request
+             Add new deployer and transformer definitions here
+  -->
+<extract-requests xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="query.xsd">
+    <extracts-id>#{extract-id}</extracts-id>
+	<definitions>
+		
+		<dependency-resolver-definitions>
+				<dependency-resolver-definition
+					class="com.mastercard.marketing.mc.publisher.resolver.ThumbnailDependencyResolver"
+					id="thumbnail_dependency_resolver" >
+				
+					<properties>
+							<property name="protocol">http</property>
+							<property name="hostAndPort">localhost:8080</property>
+							<property name="thumbnailUrlTemplate">/alfresco/s/api/path/${store-id}${path-without-extension}/content/thumbnails/${thumbnail-name}</property>
+							<property name="thumbnailUrlParametersTemplate">c=force&amp;alf_ticket=${alf_ticket}</property>
+							<property name="filesXPath">//files/files/item/file</property>
+							<property name="relatedItemsXPath">//related-items/related-assets/item</property>
+							<property name="sectionsXPath">//sections/section/items/item</property>
+							<property name="siteId">TestAnotherSite</property>
+							<property name="thumbnailNames" class="java.util.ArrayList">
+								<entries>
+									<entry>mc-hero-graphic</entry>
+									<entry>mc-file-graphic</entry>
+								</entries>
+							</property>
+					</properties>
+					
+				</dependency-resolver-definition>
+				
+				
+				<dependency-resolver-definition
+					class="com.mastercard.marketing.mc.publisher.resolver.MarketingCenterContentDependencyResolver"
+					id="content_dependency_resolver" >
+				
+					<properties>
+							<property name="filesXPath">//main/files/item/file</property>
+							<property name="relatedItemsXPath">//main/related-items/item</property>
+							<property name="sectionsXPath">//main/sections/section/items/item</property>
+							<property name="siteId">TestAnotherSite</property>
+					</properties>
+					
+				</dependency-resolver-definition>
+				
+		</dependency-resolver-definitions>
+		
+		<transformer-definitions>
+		
+			<content-transformer-definitions>
+				<transformer-definition class="org.rivetlogic.export.transformers.content.NullContentTransformer"
+				                        id="dummy_content_transformer_1"></transformer-definition>
+				<transformer-definition class="org.rivetlogic.export.transformers.content.NullContentTransformer"
+				                        id="dummy_content_transformer_2"></transformer-definition>
+				<!-- 
+					this is an example of what a DRM removing transformer would look like.
+					
+				<transformer-definition class="org.rivetlogic.components.export.transformers.RemoveDRMTransformer" id="remove_drm_transformer">
+				   <properties>
+				       <property name="password">R3sdTde2d%a</property>
+				   </properties>
+				</transformer-definition>
+				-->
+			</content-transformer-definitions>
+
+			<file-name-transformer-definitions>
+				<transformer-definition class="org.rivetlogic.export.transformers.filename.ReplaceFirstTransformer" id="thumbnail_path_transformer">
+                    <!-- 
+                       this transformer will transform a file name from:
+                            /company_home/hbp/products/Higher Ed/130/2008/108038/108038-PDF-ENG/ancillary/some_files2.txt
+                       to: 
+                            108038/108038-PDF-ENG/some_files2.txt
+                     -->
+					<properties>
+						
+						<property name="targetRegex">(.*)(/[^\.]*)(-[a-f0-9]{32})([\.]{1}[^/]*)/([^/]*)$</property>
+						<property name="replacement">$1$2-$5.png</property>
+
+					</properties>
+				</transformer-definition>
+				
+				<transformer-definition class="org.rivetlogic.export.transformers.filename.ReplaceFirstTransformer" id="content_path_transformer">
+                    <!-- 
+                       this transformer will transform a file name from:
+                            /company_home/hbp/products/Higher Ed/130/2008/108038/108038-PDF-ENG/ancillary/some_files2.txt
+                       to: 
+                            108038/108038-PDF-ENG/some_files2.txt
+                     -->
+					<properties>
+						
+						<property name="targetRegex">(.*)(/[^\.]*)(-[a-f0-9]{32})([\.]{1}[^/]*)$</property>
+						<property name="replacement">$1$2$4</property>
+
+					</properties>
+				</transformer-definition>
+				
+
+				
+			</file-name-transformer-definitions>
+		</transformer-definitions>
+
+		<deployer-definitions>
+			<deployer-definition class="org.rivetlogic.export.deployers.LocalDeployer" id="local_deployer_1">
+				<properties>
+					<property name="deployTo">/Users/sokeeffe/published-content/</property>
+				</properties>
+			</deployer-definition>
+
+		</deployer-definitions>
+	</definitions>
+
+    <extract-request>
+    	#{store-ref-node}
+
+    	<queries>
+    		#{query-list}
+    	</queries>
+
+		<dependency-resolvers>
+				#{dependency-resolvers-list}	
+		</dependency-resolvers>
+		
+        <filters>
+                #{filter-list}
+        </filters>
+
+		<transformers>
+    		<content-transformers>
+    			#{content-transformers-list}
+    		</content-transformers>
+    		<file-name-transformers>
+    			#{file-name-transformers-list}
+    		</file-name-transformers>
+
+    	</transformers>
+
+    	<deployers>
+    		#{deployer-list}
+    		<!-- can always add additional deployers here -->
+    	</deployers>
+    	
+    	<notifiers>
+    		#{notifier-list}
+    	</notifiers>
+    </extract-request>
+
+</extract-requests>
+
+<!-- END:: Template for actual request -->
+
+</extract-requests-template>
