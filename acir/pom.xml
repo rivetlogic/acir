@@ -37,15 +37,6 @@
         <org.codehaus.castor.castor.version>1.2</org.codehaus.castor.castor.version>
     </properties>
 
-    <repositories>
-        <!-- local repository for patched libraries -->
-        <repository>
-            <id>my-local-repo</id>
-            <name>Local Repo</name>
-            <url>file://${basedir}/lib</url>
-        </repository>
-
-    </repositories>
 
     <dependencies>
         <!-- Patched mule JAR for authorization on Post requests - this can be removed on upgrade to 3.1.x -->

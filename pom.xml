@@ -44,6 +44,13 @@
 
     <repositories>
 
+        <!-- local repository for patched libraries -->
+        <repository>
+            <id>my-local-repo</id>
+            <name>Local Repo</name>
+            <url>file://${basedir}/lib</url>
+        </repository>
+
         <repository>
             <id>rivetlogic</id>
             <name>Rivet Logic</name>
