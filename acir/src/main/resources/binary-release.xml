@@ -10,7 +10,7 @@
     <fileSets>
         <!--  Adds startup scripts to the root directory of zip package -->
         <fileSet>
-            <directory>mule-bundle</directory>
+            <directory>acir/mule-bundle</directory>
             <outputDirectory></outputDirectory>
             <includes>
                 <include>**</include>
@@ -19,7 +19,7 @@
         
         <!-- adds cma-cfg.properties file -->
         <fileSet>
-            <directory>src/main/resources/core</directory>
+            <directory>acir/src/main/resources/core</directory>
             <outputDirectory>/conf/core</outputDirectory>
             <includes>
                 <include>*.properties</include>
@@ -28,16 +28,16 @@
         
         <!-- adds jar package to the lib/user directory -->
         <fileSet>
-            <directory>target</directory>
+            <directory>acir/target</directory>
             <outputDirectory>/lib/user</outputDirectory>
             <includes>
                 <include>*.jar</include>
             </includes>
         </fileSet>
     </fileSets>
+
     
-    
-        <!-- Adds dependencies to zip package under lib directory -->
+    <!-- Adds dependencies to zip package under lib directory -->
     <dependencySets>
         <dependencySet>
             <outputDirectory>/lib/user</outputDirectory>
