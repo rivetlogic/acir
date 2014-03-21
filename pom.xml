@@ -128,7 +128,7 @@
         </pluginRepository>
     </pluginRepositories>
 
-    <reporting>
+   <!-- <reporting>
         <plugins>
 
             <plugin>
@@ -167,7 +167,7 @@
 
 
         </plugins>
-    </reporting>
+    </reporting>    -->
 
     <build>
         <pluginManagement>
