@@ -136,7 +136,7 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>2.10</version>
                 <configuration>
-                    <configLocation>https://raw.github.com/craftercms/coding-conventions/master/coding-conventions.xml</configLocation>
+                    <configLocation>http://sonar.craftercms.org/profiles/export?format=checkstyle&language=java&name=CrafterCms</configLocation>
                     <enableRulesSummary>true</enableRulesSummary>
                 </configuration>
             </plugin>
