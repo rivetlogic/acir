@@ -52,6 +52,12 @@
         </repository>
 
         <repository>
+            <id>jboss</id>
+            <name>JBoss Repository</name>
+            <url>https://repository.jboss.org/nexus/content/groups/public</url>
+        </repository>
+
+        <repository>
             <id>rivetlogic</id>
             <name>Rivet Logic</name>
             <url>http://maven.rivetlogic.com/nexus/content/groups/public</url>
